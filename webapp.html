@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easter Egg Dodge</title>
+    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="resume.html">Resume</a></li>
+    <br>
+    <br>
+    <style>
+        /* Basic styling for the page */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #FFFFE0; /* Light Yellow background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Hide scrollbars */
+            color: #FF69B4; /* Default text color to hot pink */
+        }
+
+        /* Container for score, lives, etc. */
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 90%; /* Responsive width */
+            max-width: 600px; /* Max width */
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #FF69B4; /* Hot pink text */
+        }
+         /* Ensure labels within game-info are also pink */
+        #game-info div {
+             color: #FF69B4;
+        }
+
+        /* The main game area */
+        #game-container {
+            width: 90%; /* Responsive width */
+            max-width: 600px; /* Max width */
+            height: 500px;
+            background-color: #a0e0a0; /* Inner game area green */
+            border: 4px solid #55a555; /* Thicker border */
+            border-radius: 10px; /* Rounded corners */
+            position: relative; /* Needed for absolute positioning of children */
+            overflow: hidden; /* Keep elements inside */
+            cursor: default; /* Prevent text selection cursor */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Styling for the bunny */
+        #bunny {
+            width: 50px;
+            height: 50px;
+            background-color: #ffffff; /* White bunny */
+            border: 2px solid #888888;
+            border-radius: 50% 50% 8px 8px; /* Smoother bunny shape */
+            position: absolute; /* Position relative to game-container */
+            bottom: 10px;
+            left: calc(50% - 25px); /* Start in the middle */
+            /* REMOVED: transition: left 0.08s linear; - Movement handled by JS loop */
+            z-index: 5; /* Ensure bunny is above background elements */
+        }
+
+        /* Add pseudo-elements for bunny ears */
+        #bunny::before,
+        #bunny::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 25px;
+            background-color: #ffffff;
+            border: 2px solid #888888;
+            border-bottom: none; /* Ears shouldn't have bottom border */
+            border-radius: 50% 50% 0 0; /* Rounded tops */
+            top: -15px; /* Position above the head */
+            z-index: -1; /* Place behind face elements if needed */
+        }
+
+        #bunny::before {
+            left: 5px;
+            transform: rotate(-20deg); /* Slightly more angled */
+        }
+
+        #bunny::after {
+            right: 5px;
+            transform: rotate(20deg); /* Slightly more angled */
+        }
+
+        /* Bunny Face Elements */
+        .eye {
+            width: 5px;
+            height: 5px;
+            background-color: #333; /* Black eyes */
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+        }
+        .eye:first-of-type { /* Position first eye */
+             left: 13px;
+        }
+        .eye:last-of-type { /* Position second eye */
+             right: 13px;
+        }
+        .nose {
+            width: 6px;
+            height: 4px;
+            background-color: #ffb6c1; /* Pink nose */
+            border-radius: 40% 40% 50% 50%;
+            position: absolute;
+            top: 25px;
+            left: calc(50% - 3px); /* Center the nose */
+        }
+
+
+        /* Styling for the falling eggs */
+        .egg {
+            width: 30px;
+            height: 40px;
+            border-radius: 50% / 60% 60% 40% 40%; /* Classic egg shape */
+            position: absolute; /* Position relative to game-container */
+            top: -45px; /* Start further above the screen */
+            border: 1px solid rgba(0, 0, 0, 0.4); /* Slightly transparent border */
+            box-shadow: inset 0 -2px 3px rgba(0,0,0,0.1); /* Subtle inner shadow */
+            z-index: 4; /* Below bunny */
+            /* Base background color set by JS */
+            background-size: 10px 10px; /* Size of the repeating pattern for dots */
+        }
+
+        /* Style for polka dot eggs */
+        .polka-dot {
+             /* Add white dots using radial gradient on top of the base color */
+             background-image: radial-gradient(circle, white 30%, transparent 35%);
+        }
+
+
+        /* Styling for messages (Start/Game Over) */
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8em; /* Slightly smaller */
+            font-weight: bold;
+            color: #FF69B4; /* Hot pink text */
+            background-color: rgba(255, 255, 255, 0.85); /* More opaque */
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10; /* Ensure message is on top */
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            display: block; /* Initially visible */
+        }
+
+        /* Style for the hit flash effect */
+        .hit {
+            /* Make bunny flash red slightly on hit */
+            background-color: #ffdddd !important; /* Light red flash */
+             border-color: red;
+            /* Trigger a small animation */
+            animation: shake 0.2s ease-in-out;
+        }
+         /* Ensure hit flash overrides face colors if needed, though unlikely */
+        .hit .eye { background-color: #333;}
+        .hit .nose { background-color: #ff8080;} /* Darker pink nose on hit */
+
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-info">
+        <div>Score: <span id="current-score">0</span></div>
+        <div>High Score: <span id="high-score">0</span></div>
+        <div>Lives: <span id="lives">3</span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="bunny">
+             <div class="eye"></div>
+             <div class="eye"></div>
+             <div class="nose"></div>
+        </div>
+        <div id="message">Press SPACE to Start</div>
+    </div>
+
+    <script>
+        // Wait for the HTML document to be fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to HTML elements
+            const gameContainer = document.getElementById('game-container');
+            const bunny = document.getElementById('bunny');
+            const scoreDisplay = document.getElementById('current-score');
+            const highScoreDisplay = document.getElementById('high-score');
+            const livesDisplay = document.getElementById('lives');
+            const message = document.getElementById('message');
+
+            // Game dimensions and element sizes (calculated dynamically)
+            let gameWidth = gameContainer.offsetWidth;
+            let gameHeight = gameContainer.offsetHeight;
+            const bunnyWidth = bunny.offsetWidth;
+            const eggWidth = 30;
+            const eggHeight = 40;
+
+            // Game state variables
+            let bunnyX; // Initialized in init()
+            let lives; // Initialized in init() or startGame()
+            let score; // Initialized in init() or startGame()
+            let highScore; // Loaded in init()
+            let gameActive = false; // Flag to check if the game is running
+            let eggs = []; // Array to store active egg objects
+            let startTime; // Timestamp when the game starts
+            let isMovingLeft = false; // Track if left arrow is held
+            let isMovingRight = false; // Track if right arrow is held
+
+            // Game loop and timing intervals
+            let gameLoopInterval; // For updating game state (movement, collisions)
+            let timerInterval; // For updating the score
+            let spawnInterval; // For creating new eggs
+            let difficultyInterval; // For increasing speed/spawn rate
+
+            // Game Settings
+            const initialEggSpeed = 2.5; // Starting pixels per frame
+            const initialSpawnRate = 1100; // Starting milliseconds between spawns
+            const speedIncreaseFactor = 0.05; // How much speed increases per second
+            const spawnRateDecreaseFactor = 8; // How much spawn rate decreases (ms) per second
+            const minSpawnRate = 350; // Fastest spawn rate allowed
+            const maxEggSpeed = 8; // Maximum speed eggs can reach
+            const bunnyMoveSpeedPerFrame = 5; // Pixels bunny moves per frame for smooth movement
+            const eggColors = ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#D0BAFF', '#FFBAF2']; // Pastel colors
+            const polkaDotChance = 0.3; // 30% chance for an egg to have polka dots
+
+            // Dynamic variables for difficulty scaling
+            let currentEggSpeed;
+            let currentSpawnRate;
+
+            // --- Initialization ---
+            function init() {
+                // Load high score from browser's local storage
+                highScore = localStorage.getItem('easterHighScore') || 0;
+                highScoreDisplay.textContent = highScore;
+
+                // Set initial game state display
+                lives = 3;
+                score = 0;
+                bunnyX = (gameWidth - bunnyWidth) / 2; // Center the bunny
+                bunny.style.left = `${bunnyX}px`;
+                livesDisplay.textContent = lives;
+                scoreDisplay.textContent = score;
+                message.textContent = "Press SPACE to Start";
+                message.style.display = 'block'; // Show the start message
+
+                // Add keyboard listeners for keydown and keyup
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('keyup', handleKeyUp);
+
+                // Handle window resize to keep game dimensions correct
+                window.addEventListener('resize', handleResize);
+            }
+
+            // --- Game Control ---
+            function startGame() {
+                if (gameActive) return; // Prevent starting if already active
+
+                console.log("Starting game...");
+
+                // Reset game state variables
+                lives = 3;
+                score = 0;
+                currentEggSpeed = initialEggSpeed;
+                currentSpawnRate = initialSpawnRate;
+                isMovingLeft = false; // Reset movement flags
+                isMovingRight = false;
+
+                // Clear any existing eggs from the DOM and the array
+                eggs.forEach(egg => egg.element.remove());
+                eggs = [];
+
+                // Reset bunny position and UI display
+                bunnyX = (gameWidth - bunnyWidth) / 2;
+                bunny.style.left = `${bunnyX}px`;
+                livesDisplay.textContent = lives;
+                scoreDisplay.textContent = score;
+
+                // Set game active flag and hide message
+                gameActive = true;
+                message.style.display = 'none';
+                startTime = Date.now(); // Record start time for scoring
+
+                // Start the core game loops and timers
+                clearIntervals(); // Clear any lingering intervals first
+                gameLoopInterval = setInterval(gameLoop, 16); // ~60 FPS update loop
+                timerInterval = setInterval(updateScore, 100); // Update score display frequently
+                spawnInterval = setInterval(spawnEgg, currentSpawnRate); // Start spawning eggs
+                difficultyInterval = setInterval(increaseDifficulty, 1000); // Increase difficulty every second
+
+                // Spawn the very first egg immediately
+                spawnEgg();
+
+                console.log("Game Started - Speed:", currentEggSpeed, "Spawn Rate:", currentSpawnRate);
+            }
+
+            function gameOver() {
+                console.log("Game Over");
+                gameActive = false; // Set game inactive
+                isMovingLeft = false; // Stop movement on game over
+                isMovingRight = false;
+                clearIntervals(); // Stop all game intervals
+
+                // Display Game Over message with final score
+                message.textContent = `Game Over! Score: ${score}. Press SPACE to Restart`;
+                message.style.display = 'block';
+
+                // Check and update high score
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('easterHighScore', highScore); // Save to local storage
+                    highScoreDisplay.textContent = highScore;
+                    console.log("New High Score!", highScore);
+                }
+            }
+
+            function clearIntervals() {
+                // Clear all intervals to prevent duplicates or running after game over
+                clearInterval(gameLoopInterval);
+                clearInterval(timerInterval);
+                clearInterval(spawnInterval);
+                clearInterval(difficultyInterval);
+            }
+
+            // --- Game Loop ---
+            function gameLoop() {
+                if (!gameActive) return; // Exit if game is not active
+
+                // Handle smooth bunny movement based on held keys
+                if (isMovingLeft) {
+                    moveBunny(-bunnyMoveSpeedPerFrame);
+                }
+                if (isMovingRight) {
+                    moveBunny(bunnyMoveSpeedPerFrame);
+                }
+
+                moveEggs(); // Move existing eggs down
+                checkCollisions(); // Check for bunny-egg collisions
+            }
+
+            // --- Difficulty Scaling ---
+            function increaseDifficulty() {
+                if (!gameActive) return;
+
+                // Increase speed, but cap it
+                currentEggSpeed = Math.min(maxEggSpeed, currentEggSpeed + speedIncreaseFactor);
+
+                // Decrease spawn rate, but set a minimum
+                currentSpawnRate = Math.max(minSpawnRate, currentSpawnRate - spawnRateDecreaseFactor);
+
+                // Restart the spawn interval with the new rate
+                clearInterval(spawnInterval);
+                spawnInterval = setInterval(spawnEgg, currentSpawnRate);
+            }
+
+
+            // --- Scoring ---
+            function updateScore() {
+                if (!gameActive) return;
+                // Calculate score based on elapsed time in seconds
+                score = Math.floor((Date.now() - startTime) / 1000);
+                scoreDisplay.textContent = score;
+            }
+
+            // --- Input Handling (KeyDown) ---
+            function handleKeyDown(e) {
+                // Start game on Space press if not active
+                if (e.code === 'Space' && !gameActive) {
+                    startGame();
+                }
+                // Set movement flags if game is active
+                else if (gameActive) {
+                    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft') {
+                        isMovingLeft = true;
+                    } else if (e.code === 'ArrowRight' || e.key === 'ArrowRight') {
+                        isMovingRight = true;
+                    }
+                }
+            }
+
+             // --- Input Handling (KeyUp) ---
+            function handleKeyUp(e) {
+                 // Clear movement flags when keys are released
+                 if (gameActive) {
+                     if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft') {
+                         isMovingLeft = false;
+                     } else if (e.code === 'ArrowRight' || e.key === 'ArrowRight') {
+                         isMovingRight = false;
+                     }
+                 }
+            }
+
+
+             // --- Window Resize Handling ---
+            function handleResize() {
+                // Recalculate game dimensions on resize
+                gameWidth = gameContainer.offsetWidth;
+                gameHeight = gameContainer.offsetHeight;
+                console.log("Window resized, game width:", gameWidth);
+                 // Adjust bunny position if it goes out of bounds due to resize
+                 bunnyX = Math.max(0, Math.min(gameWidth - bunnyWidth, bunnyX));
+                 bunny.style.left = `${bunnyX}px`;
+            }
+
+
+            // --- Bunny Movement ---
+            function moveBunny(dx) {
+                // This function is now called repeatedly by the game loop
+                bunnyX += dx; // Update bunny's horizontal position
+                // Clamp bunny position within game boundaries
+                bunnyX = Math.max(0, Math.min(gameWidth - bunnyWidth, bunnyX));
+                bunny.style.left = `${bunnyX}px`; // Apply the new position via CSS
+            }
+
+            // --- Egg Handling ---
+            function spawnEgg() {
+                if (!gameActive) return; // Don't spawn if game isn't running
+
+                const eggElement = document.createElement('div');
+                eggElement.classList.add('egg');
+
+                // Choose random horizontal position across the entire width
+                const eggX = Math.random() * (gameWidth - eggWidth); // Random X within bounds
+
+                // Choose random color
+                const eggColor = eggColors[Math.floor(Math.random() * eggColors.length)]; // Pick random pastel color
+
+                // Set initial position and style
+                eggElement.style.left = `${eggX}px`;
+                eggElement.style.backgroundColor = eggColor; // Set base color
+                eggElement.style.top = `-${eggHeight}px`; // Start just above the view
+
+                // Add polka dots randomly
+                if (Math.random() < polkaDotChance) {
+                    eggElement.classList.add('polka-dot');
+                }
+
+                // Add the egg to the game container and the tracking array
+                gameContainer.appendChild(eggElement);
+                eggs.push({ element: eggElement, x: eggX, y: -eggHeight });
+            }
+
+            function moveEggs() {
+                const eggsToRemoveIndexes = []; // Store indexes of eggs to remove
+
+                // Iterate through each egg
+                eggs.forEach((egg, index) => {
+                    egg.y += currentEggSpeed; // Move egg down based on current speed
+                    egg.element.style.top = `${egg.y}px`; // Update CSS position
+
+                    // Check if egg has fallen past the bottom of the screen
+                    if (egg.y > gameHeight) {
+                        eggsToRemoveIndexes.push(index); // Mark for removal
+                        egg.element.remove(); // Remove from DOM immediately
+                    }
+                });
+
+                // Remove off-screen eggs from the `eggs` array efficiently
+                for (let i = eggsToRemoveIndexes.length - 1; i >= 0; i--) {
+                    eggs.splice(eggsToRemoveIndexes[i], 1);
+                }
+            }
+
+            // --- Collision Detection ---
+            function checkCollisions() {
+                const bunnyRect = bunny.getBoundingClientRect(); // Get bunny's current position and size
+                const eggsToRemoveIndexes = []; // Store indexes of hit eggs
+
+                eggs.forEach((egg, index) => {
+                    if (eggsToRemoveIndexes.includes(index)) return;
+
+                    const eggRect = egg.element.getBoundingClientRect(); // Get egg's position and size
+
+                    // Simple Axis-Aligned Bounding Box (AABB) collision check
+                    const isColliding = (
+                        bunnyRect.left < eggRect.right &&
+                        bunnyRect.right > eggRect.left &&
+                        bunnyRect.top < eggRect.bottom &&
+                        bunnyRect.bottom > eggRect.top
+                    );
+
+                    if (isColliding) {
+                        console.log("Collision detected with egg at index:", index);
+                        eggsToRemoveIndexes.push(index); // Mark egg for removal
+                        egg.element.remove(); // Remove the hit egg from DOM
+                        handleHit(); // Process the hit (lose life, etc.)
+                    }
+                });
+
+                 // Remove hit eggs from the `eggs` array (iterate backwards)
+                for (let i = eggsToRemoveIndexes.length - 1; i >= 0; i--) {
+                     if (eggs[eggsToRemoveIndexes[i]]) {
+                         eggs.splice(eggsToRemoveIndexes[i], 1);
+                     } else {
+                         console.warn("Attempted to remove already removed egg index:", eggsToRemoveIndexes[i]);
+                     }
+                }
+            }
+
+            function handleHit() {
+                if (!gameActive) return; // Don't process hits if game is over
+
+                lives--; // Decrease life count
+                livesDisplay.textContent = lives; // Update display
+                console.log(`Hit! Lives remaining: ${lives}`);
+
+                // Add a visual cue for being hit (flash/shake)
+                bunny.classList.add('hit');
+                setTimeout(() => {
+                     bunny.classList.remove('hit');
+                }, 200); // Duration should match animation time
+
+                // Check if lives have run out
+                if (lives <= 0) {
+                    gameOver(); // Trigger game over sequence
+                }
+            }
+
+            // --- Start the application ---
+            init(); // Initialize the game setup
+        });
+    </script>
+</body>
+</html>

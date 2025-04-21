@@ -1,0 +1,18 @@
+.col-md-10,
+.col-lg-8,
+.col-xl-7 {
+    
+    display:  grid;
+    justify-content: center;
+    scale: .7;
+}
+    
+.h1 {
+    text-align: center;
+    color: yellow;
+}
+
+.a {
+    text-decoration: underline
+    color(blue red green blue);
+}

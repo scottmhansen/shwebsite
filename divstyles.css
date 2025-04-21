@@ -1,0 +1,72 @@
+
+
+h1 {font-family: Arial, Helvetica, sans-serif;
+    font-size: 250%;
+    color: rgba(230, 26, 26, 0.916);
+   }
+   h5 {font-family: Arial, Helvetica, sans-serif;
+   font-size: 100%;
+   color: rgb(59, 30, 222);}
+   p { font-family: Arial, Helvetica, sans-serif;
+   font-size: 100%;
+    font-weight: bold;
+   color: rgb(13, 13, 13);}
+   body {background-color: rgb(246, 241, 241);}
+   li {font-family: Arial, Helvetica, sans-serif;
+   color: rgb(12, 12, 12);}
+
+   div {
+      font-size: 110%;
+      ;
+   }
+   .rizz{ 
+    display: block;
+    border: 2px solid lime;
+    padding: 5px;
+    margin: 10px;
+    text-align: center;
+    font-size: 250%;
+    font-family: jokerman;
+    color: darkorchid;
+   }
+   .rizz:hover{
+    font-size: 500%;
+    color: rgb(255, 20, 98);
+    border: 5px fuchsia dashed;}
+   a:visited{ color: rgb(130, 122, 233);}
+   ul > li:hover{
+    /* text-decoration: underline; 
+    background-color: rgb(104, 1, 177); */
+   }
+   a:hover{text-decoration: overline;}
+   .common{padding: 5px; 
+           margin: 5px;
+           position: absolute;}
+    .bottom {position: fixed;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            text-align: center;
+            font-style: italic;
+            background-color: black;
+            font-size: 70%;}
+    .top {top: 0px;
+          left: 0px;
+          right: 0px;
+          text-align: center;
+          }
+    .content {
+          top: 250px;
+          bottom: 50px;
+          left: 0px;
+          right: 0px;}
+          .nav {position: relative;
+                float: right;
+                z-index: 1;}
+a:hover { text-decoration: underline;}
+a { color: rgb(20, 36, 211);}
+   body { color: aquamarine;}
+
+
+
+
